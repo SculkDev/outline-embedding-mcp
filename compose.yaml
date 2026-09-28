@@ -1,0 +1,22 @@
+services:
+  outline-embedding-mcp:
+    build: .
+    image: outline-embedding-mcp:latest
+    # HTTP mode so the server can run as a long-lived container.
+    # For stdio mode use: docker run -i --rm --env-file .env outline-embedding-mcp
+    environment:
+      MCP_TRANSPORT: http
+      PORT: "3000"
+      KB_API_URL: ${KB_API_URL:?set KB_API_URL in .env}
+      KB_API_KEY: ${KB_API_KEY:?set KB_API_KEY in .env}
+      KB_DOC_BASE_URL: ${KB_DOC_BASE_URL:-}
+      KB_TIMEOUT_MS: ${KB_TIMEOUT_MS:-30000}
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:?set MCP_AUTH_TOKEN in .env (bearer token clients must send)}
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
